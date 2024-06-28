@@ -19,9 +19,9 @@ $ kwin_badapple /path/to/image_sequence /path/to/bad_apple.wav
 ```
 
 ### Options
+- `--fps` FPS as a divisor of 29.97. Default: `2` for 14.985 FPS.
 - `--parent-width` and `--parent-height` to set the parent compositor size. Should be 4:3. Default: `640` and `480` respectively.
 - `--pixel-size` size of each child compositor. Should fit the parent size. Default: `32` for 20x15 at 640x480.
-- `--fps` FPS as a divisor of 29.97. Default: `2` for 14.985 FPS.
 
 ## Building
 this section will be updated later
