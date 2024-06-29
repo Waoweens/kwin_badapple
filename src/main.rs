@@ -1,5 +1,11 @@
+use std::io::stdin;
+use std::time::Duration;
 use std::path::PathBuf;
 use clap::Parser;
+use dbus::blocking::Connection;
+
+mod dbusgen;
+use dbusgen::login1::OrgFreedesktopLogin1Manager;
 
 /// Bad Apple!! but with nested Wayland compositors
 #[derive(Parser)]
@@ -24,6 +30,29 @@ struct Args {
 	pixel_size: u16,
 }
 
+// fn inhibit() {}
+
 fn main() {
     let _ = Args::parse();
+
+	let system_bus = Connection::new_system().unwrap();
+
+	let login1 = system_bus.with_proxy(
+		"org.freedesktop.login1",
+		"/org/freedesktop/login1",
+		Duration::new(5, 0)
+	);
+	
+	let inhibitor = login1.inhibit(
+		"sleep",
+		"Bad Apple!!",
+		"Playing Bad Apple!!",
+		"block"
+	).unwrap();
+
+	println!("press enter to stop inhibiting");
+	let mut input = String::new();
+	stdin().read_line(&mut input).unwrap();
+
+	drop(inhibitor);
 }
