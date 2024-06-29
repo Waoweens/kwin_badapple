@@ -32,7 +32,7 @@ trait Scripting {
 
 	/// loadDeclarativeScript method
 	#[zbus(name = "loadDeclarativeScript")]
-	fn load_declarative_script(&self, filePath: &str, pluginName: &str) -> zbus::Result<i32>;
+	fn load_declarative_script_(&self, filePath: &str, pluginName: &str) -> zbus::Result<i32>;
 
 	/// loadDeclarativeScript method
 	#[zbus(name = "loadDeclarativeScript")]
@@ -40,7 +40,7 @@ trait Scripting {
 
 	/// loadScript method
 	#[zbus(name = "loadScript")]
-	fn load_script(&self, filePath: &str, pluginName: &str) -> zbus::Result<i32>;
+	fn load_script_(&self, filePath: &str, pluginName: &str) -> zbus::Result<i32>;
 
 	/// loadScript method
 	#[zbus(name = "loadScript")]

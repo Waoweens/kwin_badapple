@@ -542,5 +542,5 @@ trait Manager {
 	#[zbus(property)]
 	fn wall_message(&self) -> zbus::Result<String>;
 	#[zbus(property)]
-	fn set_wall_message(&self, value: &str) -> zbus::Result<()>;
+	fn set_wall_message_(&self, value: &str) -> zbus::Result<()>;
 }
