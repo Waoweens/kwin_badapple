@@ -28,23 +28,23 @@ use zbus::proxy;
 trait Scripting {
 	/// isScriptLoaded method
 	#[zbus(name = "isScriptLoaded")]
-	fn is_script_loaded(&self, pluginName: &str) -> zbus::Result<bool>;
+	fn is_script_loaded(&self, plugin_name: &str) -> zbus::Result<bool>;
 
 	/// loadDeclarativeScript method
 	#[zbus(name = "loadDeclarativeScript")]
-	fn load_declarative_script_(&self, filePath: &str, pluginName: &str) -> zbus::Result<i32>;
+	fn load_declarative_script_(&self, file_path: &str, plugin_name: &str) -> zbus::Result<i32>;
 
 	/// loadDeclarativeScript method
 	#[zbus(name = "loadDeclarativeScript")]
-	fn load_declarative_script(&self, filePath: &str) -> zbus::Result<i32>;
+	fn load_declarative_script(&self, file_path: &str) -> zbus::Result<i32>;
 
 	/// loadScript method
 	#[zbus(name = "loadScript")]
-	fn load_script_(&self, filePath: &str, pluginName: &str) -> zbus::Result<i32>;
+	fn load_script_(&self, file_path: &str, plugin_name: &str) -> zbus::Result<i32>;
 
 	/// loadScript method
 	#[zbus(name = "loadScript")]
-	fn load_script(&self, filePath: &str) -> zbus::Result<i32>;
+	fn load_script(&self, file_path: &str) -> zbus::Result<i32>;
 
 	/// start method
 	#[zbus(name = "start")]
@@ -52,5 +52,5 @@ trait Scripting {
 
 	/// unloadScript method
 	#[zbus(name = "unloadScript")]
-	fn unload_script(&self, pluginName: &str) -> zbus::Result<bool>;
+	fn unload_script(&self, plugin_name: &str) -> zbus::Result<bool>;
 }
