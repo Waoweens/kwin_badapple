@@ -1,3 +1,3 @@
 // stub
-pub mod kwin;
-pub mod login1;
+pub mod manager;
+pub mod scripting;
