@@ -1,13 +1,13 @@
 use clap::Parser;
-use dbus::blocking::Connection;
+use std::error::Error;
 use std::fs::File;
-use std::io::{prelude::*, stdin, stdout, BufReader, Result, Write, Error, ErrorKind};
+use std::io::{self, prelude::*, stdin, stdout, BufReader, ErrorKind, Write};
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command, Stdio};
-use std::time::Duration;
+use zbus::{connection::Builder, Connection};
 
 mod dbusgen;
-use dbusgen::login1::OrgFreedesktopLogin1Manager;
+use dbusgen::manager::ManagerProxy;
 
 /// Bad Apple!! but with nested Wayland compositors
 #[derive(Parser)]
@@ -32,45 +32,53 @@ struct Args {
 	pixel_size: u16,
 }
 
-fn inhibit(bus: Connection) -> dbus::arg::OwnedFd {
-	let login1 = bus.with_proxy(
-		"org.freedesktop.login1",
-		"/org/freedesktop/login1",
-		Duration::new(5, 0),
-	);
+async fn inhibit(bus: Connection) -> Result<zbus::zvariant::OwnedFd, Box<dyn Error>> {
+	let proxy = ManagerProxy::new(&bus).await?;
 
-	return login1
+	let fd = proxy
 		.inhibit("sleep", "Bad Apple!!", "Playing Bad Apple!!", "block")
-		.unwrap();
+		.await?;
+
+	Ok(fd)
 }
 
-fn launch_dbus() -> Result<()> {
+async fn launch_dbus() -> Result<(zbus::Connection, String, i32), Box<dyn Error>> {
 	let path = Path::new("/tmp/badapple-dbus");
-	if !path.exists() {
-		println!("Launching new DBus daemon");
-		let file = File::create(path)?;
+	loop {
+		if !path.exists() {
+			println!("Launching new DBus daemon");
+			let file = File::create(path)?;
 
-		let mut cmd = Command::new("dbus-launch")
-			.stdout(Stdio::from(file))
-			.spawn()?;
+			let mut cmd = Command::new("dbus-launch")
+				.stdout(Stdio::from(file))
+				.spawn()?;
 
-		cmd.wait()?;
+			cmd.wait()?;
+		} else {
+			println!("DBus already running");
+			let file = File::open(path)?;
+			let buf = BufReader::new(file);
+			let lines: Vec<String> = buf
+				.lines()
+				.map(|line| line.expect("failed to parse line"))
+				.collect();
 
-		launch_dbus()?;
-	} else {
-		println!("DBus already running");
-		let file = File::open(path)?;
-		let buf = BufReader::new(file);
-		let lines: Vec<String> = buf.lines()
-			.map(|line| line.expect("failed to parse line"))
-			.collect();
+			if let Some((_, val0)) = lines[0].split_once("=") {
+				let addr = val0.trim();
+				dbg!(addr);
 
-		println!("{:?}", lines);
-
-		
+				if let Some((_, val1)) = lines[1].split_once("=") {
+					let pid = val1.trim().parse::<i32>()?;
+					dbg!(pid);
+					return Ok((Builder::address(addr)?.build().await?, addr.to_owned(), pid));
+				}
+			}
+		}
+		return Err(Box::new(io::Error::new(
+			ErrorKind::Other,
+			"Failed to launch DBus",
+		)));
 	}
-	
-	return Err(Error::new(ErrorKind::Other, "Failed to launch DBus"));
 }
 
 fn actions() {
@@ -117,15 +125,18 @@ fn start_play() {
 	stdin().read_line(&mut _i).unwrap();
 }
 
-fn main() -> Result<()> {
-	// let _ = Args::parse();
-	// let inhibitor = inhibit(Connection::new_system().unwrap());
+#[tokio::main]
+async fn main() -> core::result::Result<(), Box<dyn std::error::Error>> {
+	let system_bus = Connection::system().await?;
 
-	// actions();
+	let inhibitor = inhibit(system_bus).await?;
 
-	// drop(inhibitor);
+	let (session_bus, address, pid) = launch_dbus().await?;
+	println!("Connected to session bus: {} at {}", address, pid);
 
-	launch_dbus()?;
+	actions();
+
+	drop(inhibitor);
 
 	Ok(())
 }
