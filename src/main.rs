@@ -1,7 +1,7 @@
 use clap::Parser;
 use dbus::blocking::Connection;
 use std::fs::File;
-use std::io::{stdin, stdout, Error, Result, Write};
+use std::io::{prelude::*, stdin, stdout, BufReader, Result, Write, Error, ErrorKind};
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command, Stdio};
 use std::time::Duration;
@@ -42,6 +42,35 @@ fn inhibit(bus: Connection) -> dbus::arg::OwnedFd {
 	return login1
 		.inhibit("sleep", "Bad Apple!!", "Playing Bad Apple!!", "block")
 		.unwrap();
+}
+
+fn launch_dbus() -> Result<()> {
+	let path = Path::new("/tmp/badapple-dbus");
+	if !path.exists() {
+		println!("Launching new DBus daemon");
+		let file = File::create(path)?;
+
+		let mut cmd = Command::new("dbus-launch")
+			.stdout(Stdio::from(file))
+			.spawn()?;
+
+		cmd.wait()?;
+
+		launch_dbus()?;
+	} else {
+		println!("DBus already running");
+		let file = File::open(path)?;
+		let buf = BufReader::new(file);
+		let lines: Vec<String> = buf.lines()
+			.map(|line| line.expect("failed to parse line"))
+			.collect();
+
+		println!("{:?}", lines);
+
+		
+	}
+	
+	return Err(Error::new(ErrorKind::Other, "Failed to launch DBus"));
 }
 
 fn actions() {
@@ -96,7 +125,7 @@ fn main() -> Result<()> {
 
 	// drop(inhibitor);
 
-	// launch_dbus()?;
+	launch_dbus()?;
 
 	Ok(())
 }
